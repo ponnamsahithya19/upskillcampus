@@ -1,0 +1,2 @@
+1000000001;Savings;5000.0;2026-07-12T10:00:00;Sahithya Ponnam|22|Female|9876543210|sahithya@test.com|Plot 42, Hyderabad, India|123456789012|ABCDE1234F
+1000000002;Current;12000.0;2026-07-12T10:15:00;Aditya Varma|24|Male|9123456789|aditya@test.com|Lane 7, Gachibowli, India|987654321098|XYZWY6789K

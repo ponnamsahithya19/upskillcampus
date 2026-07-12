@@ -1,0 +1,1502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enterprise Java Banking System - Simulator & Live Database Preview</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --panel-bg: rgba(30, 41, 59, 0.7);
+            --panel-border: rgba(255, 255, 255, 0.08);
+            --primary-accent: #38bdf8;
+            --primary-glow: rgba(56, 189, 248, 0.3);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --terminal-green: #34d399;
+            --terminal-error: #f87171;
+            --terminal-text: #e2e8f0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.12) 0, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.08) 0, transparent 50%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        header {
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--panel-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(12px);
+        }
+
+        .logo-section h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #38bdf8, #34d399);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo-section span {
+            font-size: 0.8rem;
+            font-family: 'Fira Code', monospace;
+            background: rgba(56, 189, 248, 0.15);
+            color: var(--primary-accent);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+        }
+
+        .badge-status {
+            font-size: 0.85rem;
+            color: var(--terminal-green);
+            background: rgba(52, 211, 153, 0.1);
+            padding: 0.4rem 0.8rem;
+            border-radius: 9999px;
+            border: 1px solid rgba(52, 211, 153, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--terminal-green);
+            border-radius: 50%;
+            animation: pulse 1.8s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); opacity: 0.5; }
+            50% { transform: scale(1.15); opacity: 1; }
+            100% { transform: scale(0.95); opacity: 0.5; }
+        }
+
+        main {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1.15fr 1fr;
+            gap: 2rem;
+            padding: 2rem;
+            max-width: 1700px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Column 1: Terminal Screen */
+        .terminal-container {
+            background-color: #0b0f19;
+            border-radius: 12px;
+            border: 1px solid var(--panel-border);
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+            height: 770px;
+            overflow: hidden;
+        }
+
+        .terminal-header {
+            background: #151e2e;
+            padding: 0.75rem 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--panel-border);
+        }
+
+        .terminal-buttons {
+            display: flex;
+            gap: 6px;
+        }
+
+        .term-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        .dot-red { background: #f87171; }
+        .dot-yellow { background: #fbbf24; }
+        .dot-green { background: #34d399; }
+
+        .terminal-title {
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .terminal-body {
+            flex: 1;
+            padding: 1.5rem;
+            overflow-y: auto;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.8rem;
+            line-height: 1.4;
+            color: var(--terminal-text);
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .terminal-line {
+            white-space: pre-wrap;
+        }
+
+        .system-out {
+            color: var(--terminal-text);
+        }
+
+        .system-success {
+            color: var(--terminal-green);
+        }
+
+        .system-error {
+            color: var(--terminal-error);
+            font-weight: 500;
+        }
+
+        .terminal-input-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: auto;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 1rem;
+            background: #0d1322;
+        }
+
+        .prompt-symbol {
+            color: var(--primary-accent);
+            font-weight: bold;
+        }
+
+        .terminal-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text-main);
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+            width: 100%;
+        }
+
+        /* Column 2: Dashboard Panel with Tabs */
+        .db-container {
+            background: var(--panel-bg);
+            border-radius: 12px;
+            border: 1px solid var(--panel-border);
+            backdrop-filter: blur(16px);
+            display: flex;
+            flex-direction: column;
+            height: 770px;
+            overflow: hidden;
+        }
+
+        .tabs-header {
+            display: flex;
+            background: rgba(15, 23, 42, 0.5);
+            border-bottom: 1px solid var(--panel-border);
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 1rem;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-bottom: 2px solid transparent;
+            text-align: center;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .tab-btn.active {
+            color: var(--primary-accent);
+            border-bottom-color: var(--primary-accent);
+            background: rgba(15, 23, 42, 0.3);
+        }
+
+        .tab-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+            display: none;
+        }
+
+        .tab-content.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* DB Visualizer Layout */
+        .db-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .account-card {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--panel-border);
+            border-radius: 8px;
+            padding: 1.2rem;
+            transition: all 0.3s;
+        }
+
+        .account-card:hover {
+            border-color: rgba(56, 189, 248, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .acc-number {
+            font-family: 'Fira Code', monospace;
+            font-weight: bold;
+            color: var(--primary-accent);
+        }
+
+        .acc-type {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .type-savings {
+            background: rgba(56, 189, 248, 0.15);
+            color: #38bdf8;
+            border: 1px solid rgba(56, 189, 248, 0.2);
+        }
+
+        .type-current {
+            background: rgba(168, 85, 247, 0.15);
+            color: #c084fc;
+            border: 1px solid rgba(168, 85, 247, 0.2);
+        }
+
+        .customer-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.4rem 1rem;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+            padding-bottom: 0.25rem;
+        }
+
+        .info-label {
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        .info-value {
+            color: var(--text-main);
+            max-width: 140px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .card-footer {
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding-top: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .bal-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .bal-value {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--terminal-green);
+        }
+
+        /* File Viewers Layout */
+        .file-editor-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .file-label {
+            font-family: 'Fira Code', monospace;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .file-content-area {
+            flex: 1;
+            background: #080c14;
+            border: 1px solid var(--panel-border);
+            border-radius: 6px;
+            padding: 1rem;
+            color: #cbd5e1;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.75rem;
+            line-height: 1.5;
+            white-space: pre;
+            overflow: auto;
+        }
+
+        .preview-instructions {
+            text-align: center;
+            padding: 1.5rem;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            border-top: 1px solid var(--panel-border);
+            background: rgba(15, 23, 42, 0.3);
+        }
+
+        .preview-instructions code {
+            font-family: 'Fira Code', monospace;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 0.1rem 0.4rem;
+            border-radius: 4px;
+            color: var(--primary-accent);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        @media (max-width: 1024px) {
+            main {
+                grid-template-columns: 1fr;
+            }
+            .terminal-container, .db-container {
+                height: 600px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-section">
+            <h1>Banking Information System <span>v2.0.0</span></h1>
+        </div>
+        <div class="badge-status">
+            <div class="pulse-dot"></div>
+            USC / UCT Academic Overhaul Simulator
+        </div>
+    </header>
+
+    <main>
+        <!-- Column 1: Terminal simulator -->
+        <section class="terminal-container">
+            <div class="terminal-header">
+                <div class="terminal-buttons">
+                    <span class="term-dot dot-red"></span>
+                    <span class="term-dot dot-yellow"></span>
+                    <span class="term-dot dot-green"></span>
+                </div>
+                <div class="terminal-title">Main.java - Console Terminal</div>
+                <div style="width: 42px;"></div>
+            </div>
+            <div class="terminal-body" id="terminalOutput">
+                <!-- CLI entries populated dynamically -->
+            </div>
+            <div class="terminal-input-row">
+                <span class="prompt-symbol">&gt;</span>
+                <input type="text" class="terminal-input" id="terminalInput" autofocus placeholder="Type option and press Enter...">
+            </div>
+        </section>
+
+        <!-- Column 2: Visualizer with Tabs -->
+        <section class="db-container">
+            <div class="tabs-header">
+                <button class="tab-btn active" onclick="switchTab(event, 'tabDB')">ArrayList Database</button>
+                <button class="tab-btn" onclick="switchTab(event, 'tabAccountsFile')">accounts.txt</button>
+                <button class="tab-btn" onclick="switchTab(event, 'tabTransactionsFile')">transactions.txt</button>
+            </div>
+
+            <!-- Tab: In-Memory DB Visualizer -->
+            <div id="tabDB" class="tab-content active">
+                <div class="db-list" id="dbList">
+                    <!-- Cards populated by JS -->
+                </div>
+            </div>
+
+            <!-- Tab: accounts.txt file view -->
+            <div id="tabAccountsFile" class="tab-content">
+                <div class="file-editor-container">
+                    <div class="file-label">
+                        <span>📂 accounts.txt (HDD Buffer Data)</span>
+                        <span id="accFileByte">0 bytes</span>
+                    </div>
+                    <div class="file-content-area" id="accountsFileContent"></div>
+                </div>
+            </div>
+
+            <!-- Tab: transactions.txt file view -->
+            <div id="tabTransactionsFile" class="tab-content">
+                <div class="file-editor-container">
+                    <div class="file-label">
+                        <span>📂 transactions.txt (Audit Ledger Data)</span>
+                        <span id="txnFileByte">0 bytes</span>
+                    </div>
+                    <div class="file-content-area" id="transactionsFileContent"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div class="preview-instructions">
+        💡 Default password is <code>admin123</code>. Reset attempts lock count by using Option 15. System locks after 3 failures.
+    </div>
+
+    <script>
+        // Database State syncing
+        let nextAccountNum = 1000000003;
+        let nextTxnNum = 100003;
+        let adminPassword = "admin123";
+        let failedAttempts = 0;
+        let isLocked = false;
+
+        let accounts = [
+            {
+                accountNumber: "1000000001",
+                type: "Savings",
+                balance: 5000.00,
+                dateOfCreation: "2026-07-12T10:00:00",
+                customer: {
+                    name: "Sahithya Ponnam",
+                    age: 22,
+                    gender: "Female",
+                    phone: "9876543210",
+                    email: "sahithya@test.com",
+                    address: "Plot 42, Hyderabad, India",
+                    aadhaar: "123456789012",
+                    pan: "ABCDE1234F"
+                }
+            },
+            {
+                accountNumber: "1000000002",
+                type: "Current",
+                balance: 12000.00,
+                dateOfCreation: "2026-07-12T10:15:00",
+                customer: {
+                    name: "Aditya Varma",
+                    age: 24,
+                    gender: "Male",
+                    phone: "9123456789",
+                    email: "aditya@test.com",
+                    address: "Lane 7, Gachibowli, India",
+                    aadhaar: "987654321098",
+                    pan: "XYZWY6789K"
+                }
+            }
+        ];
+
+        let transactions = [
+            {
+                txnId: "TXN100001",
+                accountNumber: "1000000001",
+                timestamp: "2026-07-12T10:00:00",
+                type: "OPENING_DEP",
+                amount: 5000.00,
+                balanceBefore: 0.0,
+                balanceAfter: 5000.00,
+                status: "SUCCESS"
+            },
+            {
+                txnId: "TXN100002",
+                accountNumber: "1000000002",
+                timestamp: "2026-07-12T10:15:00",
+                type: "OPENING_DEP",
+                amount: 12000.00,
+                balanceBefore: 0.0,
+                balanceAfter: 12000.00,
+                status: "SUCCESS"
+            }
+        ];
+
+        // Security Authentication State
+        let isAdminLoggedIn = false;
+
+        // Terminal wizard states
+        const STATE_MAIN = 0;
+        
+        // Admin Auth
+        const STATE_ADMIN_USER = 1;
+        const STATE_ADMIN_PASS = 2;
+
+        // Create Account Sub-states
+        const STATE_CR_NAME = 11;
+        const STATE_CR_AGE = 12;
+        const STATE_CR_GENDER = 13;
+        const STATE_CR_PHONE = 14;
+        const STATE_CR_EMAIL = 15;
+        const STATE_CR_ADDR = 16;
+        const STATE_CR_AADHAAR = 17;
+        const STATE_CR_PAN = 18;
+        const STATE_CR_TYPE = 19;
+        const STATE_CR_DEP = 20;
+
+        // Deposit
+        const STATE_DEP_ACC = 31;
+        const STATE_DEP_AMT = 32;
+
+        // Withdraw
+        const STATE_WTH_ACC = 41;
+        const STATE_WTH_AMT = 42;
+
+        // Transfer
+        const STATE_TRF_FROM = 51;
+        const STATE_TRF_TO = 52;
+        const STATE_TRF_AMT = 53;
+
+        // Balance Enquiry
+        const STATE_BAL_ACC = 61;
+
+        // Search Account
+        const STATE_SR_CRITERIA = 71;
+        const STATE_SR_QUERY = 72;
+
+        // Transaction History
+        const STATE_TX_ACC = 81;
+
+        // Update Account details
+        const STATE_UP_ACC = 91;
+        const STATE_UP_CHOICE = 92;
+        const STATE_UP_VALUE = 93;
+
+        // Delete Account
+        const STATE_DL_ACC = 101;
+        const STATE_DL_CONF = 102;
+
+        // Interest Calculator
+        const STATE_INT_ACC = 111;
+
+        // Mini statement
+        const STATE_MINI_ACC = 121;
+
+        // Admin Security Management Submenu choice
+        const STATE_ADMIN_SUB = 131;
+        const STATE_ADMIN_SUB_CHG_OLD = 132;
+        const STATE_ADMIN_SUB_CHG_NEW = 133;
+
+        let currentState = STATE_MAIN;
+        let wizard = {};
+
+        const outputDiv = document.getElementById("terminalOutput");
+        const inputField = document.getElementById("terminalInput");
+
+        window.onload = function() {
+            printWelcome();
+            updateDBVisualizer();
+            syncVirtualFiles();
+            
+            // Allow focus clicking on terminal screen
+            document.querySelector(".terminal-container").addEventListener("click", () => {
+                inputField.focus();
+            });
+
+            // Enter listener
+            inputField.addEventListener("keydown", function(e) {
+                if (e.key === "Enter") {
+                    let cmdValue = inputField.value;
+                    inputField.value = "";
+                    processCommand(cmdValue);
+                }
+            });
+        };
+
+        function printWelcome() {
+            writeOutput(`=================================================================\n     WELCOME TO THE ENTERPRISE BANKING INFORMATION SYSTEM        \n     Version: v2.0.0 (Enterprise-Build)\n     System Init Time: 2026-07-12 14:13:08\n=================================================================`, "system-out");
+            printMenu();
+        }
+
+        function printMenu() {
+            let adminStatus = isAdminLoggedIn ? "ACTIVE (ADMIN)" : (isLocked ? "LOCKED (BLOCKED)" : "GUEST");
+            writeOutput(`\n------------------------- SYSTEM DASHBOARD -------------------------\n  Time: 2026-07-12 14:13:08 | Security Mode: ${adminStatus}\n--------------------------------------------------------------------\n  1. Admin Login                  9. Transaction History\n  2. Create New Bank Account      10. Update Customer Details\n  3. Deposit Money                11. Delete Account (Admin)\n  4. Withdraw Money               12. Interest Calculator (Savings)\n  5. Transfer Money               13. Mini Statement (Last 10)\n  6. Balance Enquiry              14. Bank Dashboard Summary\n  7. Search Account               15. Admin Security Management\n  8. Display All Accounts (Admin) 16. Save & Exit\n--------------------------------------------------------------------`, "system-out");
+            writeOutput("Select choice (1-16): ", "prompt-symbol");
+        }
+
+        function writeOutput(text, cssClass = "system-out") {
+            const line = document.createElement("div");
+            line.className = `terminal-line ${cssClass}`;
+            line.innerText = text;
+            outputDiv.appendChild(line);
+            outputDiv.scrollTop = outputDiv.scrollHeight;
+        }
+
+        function triggerLoading(message, callback) {
+            writeOutput(`[PROCESSING] ${message} ...`, "system-out");
+            setTimeout(() => {
+                callback();
+            }, 600);
+        }
+
+        function processCommand(inputValue) {
+            writeOutput("> " + inputValue, "system-out");
+            let val = inputValue.trim();
+
+            if (currentState === STATE_MAIN) {
+                let choice = parseInt(val);
+                if (isNaN(choice) || choice < 1 || choice > 16) {
+                    writeOutput("[WARNING] Invalid choice. Please enter a number between 1 and 16.", "system-error");
+                    printMenu();
+                    return;
+                }
+
+                switch (choice) {
+                    case 1:
+                        if (isLocked) {
+                            writeOutput("[ERROR] Security lockout active. Administrative actions are disabled.", "system-error");
+                            printMenu();
+                            return;
+                        }
+                        writeOutput("\n=================================================================\n  ADMIN LOGIN PORTAL\n=================================================================", "system-out");
+                        writeOutput("Enter Admin Username: ", "system-out");
+                        currentState = STATE_ADMIN_USER;
+                        break;
+                    case 2:
+                        writeOutput("\n=================================================================\n  CREATE NEW BANK ACCOUNT\n=================================================================", "system-out");
+                        writeOutput("Enter Customer Name: ", "system-out");
+                        currentState = STATE_CR_NAME;
+                        break;
+                    case 3:
+                        writeOutput("\n=================================================================\n  DEPOSIT MONEY\n=================================================================", "system-out");
+                        writeOutput("Enter Account Number: ", "system-out");
+                        currentState = STATE_DEP_ACC;
+                        break;
+                    case 4:
+                        writeOutput("\n=================================================================\n  WITHDRAW MONEY\n=================================================================", "system-out");
+                        writeOutput("Enter Account Number: ", "system-out");
+                        currentState = STATE_WTH_ACC;
+                        break;
+                    case 5:
+                        writeOutput("\n=================================================================\n  TRANSFER MONEY\n=================================================================", "system-out");
+                        writeOutput("Enter Sender Account Number: ", "system-out");
+                        currentState = STATE_TRF_FROM;
+                        break;
+                    case 6:
+                        writeOutput("\n=================================================================\n  BALANCE ENQUIRY\n=================================================================", "system-out");
+                        writeOutput("Enter Account Number: ", "system-out");
+                        currentState = STATE_BAL_ACC;
+                        break;
+                    case 7:
+                        writeOutput("\n=================================================================\n  SEARCH ACCOUNT DATABASE\n=================================================================", "system-out");
+                        writeOutput("Criteria options:\n1. Search by Account Number\n2. Search by Customer Name\n3. Search by Phone Number\n4. Search by Aadhaar Number\nEnter choice (1-4): ", "system-out");
+                        currentState = STATE_SR_CRITERIA;
+                        break;
+                    case 8:
+                        if (!isAdminLoggedIn) {
+                            writeOutput("\n[ERROR] Access Denied. Administrative authentication required. Option 1 to authorize.", "system-error");
+                            printMenu();
+                            return;
+                        }
+                        displayAllAccountsCLI();
+                        printMenu();
+                        break;
+                    case 9:
+                        writeOutput("\n=================================================================\n  TRANSACTION HISTORY\n=================================================================", "system-out");
+                        writeOutput("Enter Account Number: ", "system-out");
+                        currentState = STATE_TX_ACC;
+                        break;
+                    case 10:
+                        writeOutput("\n=================================================================\n  UPDATE CUSTOMER DETAILS\n=================================================================", "system-out");
+                        writeOutput("Enter Account Number: ", "system-out");
+                        currentState = STATE_UP_ACC;
+                        break;
+                    case 11:
+                        if (!isAdminLoggedIn) {
+                            writeOutput("\n[ERROR] Access Denied. Administrative authentication required.", "system-error");
+                            printMenu();
+                            return;
+                        }
+                        writeOutput("\n=================================================================\n  DELETE CUSTOMER ACCOUNT\n=================================================================", "system-out");
+                        writeOutput("Enter Account Number to Delete: ", "system-out");
+                        currentState = STATE_DL_ACC;
+                        break;
+                    case 12:
+                        writeOutput("\n=================================================================\n  SAVINGS ACCOUNT INTEREST CALCULATOR\n=================================================================", "system-out");
+                        writeOutput("Enter Account Number: ", "system-out");
+                        currentState = STATE_INT_ACC;
+                        break;
+                    case 13:
+                        writeOutput("\n=================================================================\n  MINI STATEMENT ENQUIRY\n=================================================================", "system-out");
+                        writeOutput("Enter Account Number: ", "system-out");
+                        currentState = STATE_MINI_ACC;
+                        break;
+                    case 14:
+                        displayDashboardReport();
+                        printMenu();
+                        break;
+                    case 15:
+                        writeOutput("\n=================================================================\n  ADMIN SECURITY & REPORTS MANAGEMENT\n=================================================================\n  1. Change Admin Password\n  2. Reset Intruder Lock status\n  3. Generate Accounts Report (Admin)\n  4. Generate Transactions Ledger Report (Admin)\n  5. Logout Admin\nEnter choice (1-5): ", "system-out");
+                        currentState = STATE_ADMIN_SUB;
+                        break;
+                    case 16:
+                        triggerLoading("Saving database blocks to HDD...", () => {
+                            writeOutput("\n[SUCCESS] Database blocks successfully persisted. System offline.", "system-success");
+                            inputField.disabled = true;
+                            inputField.placeholder = "System Offline.";
+                        });
+                        break;
+                }
+            } else {
+                handleWizardInputs(val);
+            }
+        }
+
+        function handleWizardInputs(val) {
+            try {
+                switch (currentState) {
+                    // Admin login
+                    case STATE_ADMIN_USER:
+                        wizard.user = val;
+                        writeOutput("Enter Admin Password: ", "system-out");
+                        currentState = STATE_ADMIN_PASS;
+                        break;
+                    case STATE_ADMIN_PASS:
+                        triggerLoading("Checking authorizations...", () => {
+                            if (wizard.user === "admin" && val === adminPassword) {
+                                isAdminLoggedIn = true;
+                                failedAttempts = 0;
+                                writeOutput("\n[SUCCESS] Access Granted. Administrative privileges enabled.", "system-success");
+                            } else {
+                                failedAttempts++;
+                                if (failedAttempts >= 3) {
+                                    isLocked = true;
+                                    writeOutput("\n[ERROR] SECURITY LOCKDOWN: Administrative console has been LOCKED.", "system-error");
+                                } else {
+                                    let rem = 3 - failedAttempts;
+                                    writeOutput(`\n[WARNING] Invalid Credentials. Attempts remaining: ${rem}`, "system-error");
+                                }
+                            }
+                            wizard = {};
+                            currentState = STATE_MAIN;
+                            printMenu();
+                        });
+                        break;
+
+                    // Create Account
+                    case STATE_CR_NAME:
+                        if (!val) throw new Error("Customer name cannot be empty.");
+                        wizard.name = val;
+                        writeOutput("Enter Customer Age: ", "system-out");
+                        currentState = STATE_CR_AGE;
+                        break;
+                    case STATE_CR_AGE:
+                        let age = parseInt(val);
+                        if (isNaN(age) || age < 18) throw new Error("Customer must be at least 18 years old.");
+                        wizard.age = age;
+                        writeOutput("Enter Gender (Male/Female/Other): ", "system-out");
+                        currentState = STATE_CR_GENDER;
+                        break;
+                    case STATE_CR_GENDER:
+                        if (!val) throw new Error("Gender cannot be empty.");
+                        wizard.gender = val;
+                        writeOutput("Enter Phone Number (10 digits): ", "system-out");
+                        currentState = STATE_CR_PHONE;
+                        break;
+                    case STATE_CR_PHONE:
+                        if (!val.match(/^\d{10}$/)) throw new Error("Phone number must contain exactly 10 digits.");
+                        wizard.phone = val;
+                        writeOutput("Enter Email Address: ", "system-out");
+                        currentState = STATE_CR_EMAIL;
+                        break;
+                    case STATE_CR_EMAIL:
+                        if (!val.includes("@") || !val.includes(".")) throw new Error("Invalid email format.");
+                        wizard.email = val;
+                        writeOutput("Enter Address: ", "system-out");
+                        currentState = STATE_CR_ADDR;
+                        break;
+                    case STATE_CR_ADDR:
+                        if (!val) throw new Error("Address cannot be empty.");
+                        wizard.address = val;
+                        writeOutput("Enter Aadhaar Number (12 digits): ", "system-out");
+                        currentState = STATE_CR_AADHAAR;
+                        break;
+                    case STATE_CR_AADHAAR:
+                        if (!val.match(/^\d{12}$/)) throw new Error("Aadhaar card number must be exactly 12 digits.");
+                        wizard.aadhaar = val;
+                        writeOutput("Enter PAN Card Number (10 characters): ", "system-out");
+                        currentState = STATE_CR_PAN;
+                        break;
+                    case STATE_CR_PAN:
+                        if (!val.match(/^[A-Z]{5}\d{4}[A-Z]{1}$/i)) throw new Error("Invalid PAN card format.");
+                        wizard.pan = val.toUpperCase();
+                        writeOutput("Enter Account Type (Savings/Current): ", "system-out");
+                        currentState = STATE_CR_TYPE;
+                        break;
+                    case STATE_CR_TYPE:
+                        let type = val.toLowerCase();
+                        if (type !== "savings" && type !== "current") throw new Error("Invalid type.");
+                        wizard.type = type === "savings" ? "Savings" : "Current";
+                        writeOutput("Enter Initial Deposit (Min: Rs.1000): ", "system-out");
+                        currentState = STATE_CR_DEP;
+                        break;
+                    case STATE_CR_DEP:
+                        let dep = parseFloat(val);
+                        if (isNaN(dep) || dep < 1000.00) throw new Error("Opening balance must be at least Rs. 1,000.00.");
+
+                        triggerLoading("Verifying specifications and generating keys...", () => {
+                            let accNum = String(nextAccountNum++);
+                            let creationTime = new Date().toISOString().split('.')[0];
+
+                            let newAcc = {
+                                accountNumber: accNum,
+                                type: wizard.type,
+                                balance: dep,
+                                dateOfCreation: creationTime,
+                                customer: {
+                                    name: wizard.name,
+                                    age: wizard.age,
+                                    gender: wizard.gender,
+                                    phone: wizard.phone,
+                                    email: wizard.email,
+                                    address: wizard.address,
+                                    aadhaar: wizard.aadhaar,
+                                    pan: wizard.pan
+                                }
+                            };
+
+                            accounts.push(newAcc);
+
+                            transactions.push({
+                                txnId: "TXN" + nextTxnNum++,
+                                accountNumber: accNum,
+                                timestamp: creationTime,
+                                type: "OPENING_DEP",
+                                amount: dep,
+                                balanceBefore: 0.0,
+                                balanceAfter: dep,
+                                status: "SUCCESS"
+                            });
+
+                            updateDBVisualizer();
+                            syncVirtualFiles();
+                            writeOutput("\n[SUCCESS] Account registered successfully!", "system-success");
+                            writeOutput("Assigned Account Number: " + accNum, "system-success");
+
+                            wizard = {};
+                            currentState = STATE_MAIN;
+                            printMenu();
+                        });
+                        break;
+
+                    // Deposit Money
+                    case STATE_DEP_ACC:
+                        let dpAcc = findAcc(val);
+                        if (!dpAcc) throw new Error("Account number does not exist.");
+                        wizard.acc = dpAcc;
+                        writeOutput("Enter Amount to Deposit: ", "system-out");
+                        currentState = STATE_DEP_AMT;
+                        break;
+                    case STATE_DEP_AMT:
+                        let dpAmt = parseFloat(val);
+                        if (isNaN(dpAmt) || dpAmt <= 0) throw new Error("Deposit amount must be greater than zero.");
+
+                        triggerLoading("Verifying ledger tables...", () => {
+                            let balanceBefore = wizard.acc.balance;
+                            wizard.acc.balance += dpAmt;
+                            
+                            transactions.push({
+                                txnId: "TXN" + nextTxnNum++,
+                                accountNumber: wizard.acc.accountNumber,
+                                timestamp: new Date().toISOString().split('.')[0],
+                                type: "DEPOSIT",
+                                amount: dpAmt,
+                                balanceBefore: balanceBefore,
+                                balanceAfter: wizard.acc.balance,
+                                status: "SUCCESS"
+                            });
+
+                            updateDBVisualizer();
+                            syncVirtualFiles();
+                            writeOutput(`\n[SUCCESS] Deposit of Rs. ${dpAmt.toFixed(2)} completed.`, "system-success");
+
+                            wizard = {};
+                            currentState = STATE_MAIN;
+                            printMenu();
+                        });
+                        break;
+
+                    // Withdraw Money
+                    case STATE_WTH_ACC:
+                        let wtAcc = findAcc(val);
+                        if (!wtAcc) throw new Error("Account number does not exist.");
+                        wizard.acc = wtAcc;
+                        writeOutput("Enter Amount to Withdraw: ", "system-out");
+                        currentState = STATE_WTH_AMT;
+                        break;
+                    case STATE_WTH_AMT:
+                        let wtAmt = parseFloat(val);
+                        if (isNaN(wtAmt) || wtAmt <= 0) throw new Error("Withdrawal amount must be greater than zero.");
+
+                        triggerLoading("Checking liquidity constraints...", () => {
+                            let balanceBefore = wizard.acc.balance;
+                            let minReq = wizard.acc.type === "Savings" ? 1000.00 : 0.00;
+                            
+                            if (balanceBefore - wtAmt < minReq) {
+                                transactions.push({
+                                    txnId: "TXN" + nextTxnNum++,
+                                    accountNumber: wizard.acc.accountNumber,
+                                    timestamp: new Date().toISOString().split('.')[0],
+                                    type: "WITHDRAWAL",
+                                    amount: wtAmt,
+                                    balanceBefore: balanceBefore,
+                                    balanceAfter: balanceBefore,
+                                    status: "FAILED"
+                                });
+                                syncVirtualFiles();
+                                throw new Error("Transaction Denied. Insufficient funds. Balance must maintain Rs. " + minReq);
+                            }
+
+                            wizard.acc.balance -= wtAmt;
+                            transactions.push({
+                                txnId: "TXN" + nextTxnNum++,
+                                accountNumber: wizard.acc.accountNumber,
+                                timestamp: new Date().toISOString().split('.')[0],
+                                type: "WITHDRAWAL",
+                                amount: wtAmt,
+                                balanceBefore: balanceBefore,
+                                balanceAfter: wizard.acc.balance,
+                                status: "SUCCESS"
+                            });
+
+                            updateDBVisualizer();
+                            syncVirtualFiles();
+                            writeOutput(`\n[SUCCESS] Withdrawal of Rs. ${wtAmt.toFixed(2)} completed.`, "system-success");
+
+                            wizard = {};
+                            currentState = STATE_MAIN;
+                            printMenu();
+                        });
+                        break;
+
+                    // Transfer Money
+                    case STATE_TRF_FROM:
+                        let trfFrom = findAcc(val);
+                        if (!trfFrom) throw new Error("Source account number does not exist.");
+                        wizard.from = trfFrom;
+                        writeOutput("Enter Destination (To) Account Number: ", "system-out");
+                        currentState = STATE_TRF_TO;
+                        break;
+                    case STATE_TRF_TO:
+                        if (val === wizard.from.accountNumber) throw new Error("Source and destination cannot be the same.");
+                        let trfTo = findAcc(val);
+                        if (!trfTo) throw new Error("Destination account number does not exist.");
+                        wizard.to = trfTo;
+                        writeOutput("Enter Amount to Transfer: ", "system-out");
+                        currentState = STATE_TRF_AMT;
+                        break;
+                    case STATE_TRF_AMT:
+                        let trfAmt = parseFloat(val);
+                        if (isNaN(trfAmt) || trfAmt <= 0) throw new Error("Transfer amount must be greater than zero.");
+
+                        triggerLoading("Coordinating transactional balances...", () => {
+                            let srcBalBefore = wizard.from.balance;
+                            let destBalBefore = wizard.to.balance;
+                            let srcLimit = wizard.from.type === "Savings" ? 1000.00 : 0.00;
+
+                            if (srcBalBefore - trfAmt < srcLimit) {
+                                transactions.push({
+                                    txnId: "TXN" + nextTxnNum++,
+                                    accountNumber: wizard.from.accountNumber,
+                                    timestamp: new Date().toISOString().split('.')[0],
+                                    type: "TRANSFER_OUT",
+                                    amount: trfAmt,
+                                    balanceBefore: srcBalBefore,
+                                    balanceAfter: srcBalBefore,
+                                    status: "FAILED"
+                                });
+                                syncVirtualFiles();
+                                throw new Error("Transfer failed: Insufficient funds. Sender balance must maintain Rs. " + srcLimit);
+                            }
+
+                            wizard.from.balance -= trfAmt;
+                            wizard.to.balance += trfAmt;
+
+                            let now = new Date().toISOString().split('.')[0];
+                            transactions.push({
+                                txnId: "TXN" + nextTxnNum++,
+                                accountNumber: wizard.from.accountNumber,
+                                timestamp: now,
+                                type: "TRANSFER_OUT",
+                                amount: trfAmt,
+                                balanceBefore: srcBalBefore,
+                                balanceAfter: wizard.from.balance,
+                                status: "SUCCESS"
+                            });
+                            transactions.push({
+                                txnId: "TXN" + nextTxnNum++,
+                                accountNumber: wizard.to.accountNumber,
+                                timestamp: now,
+                                type: "TRANSFER_IN",
+                                amount: trfAmt,
+                                balanceBefore: destBalBefore,
+                                balanceAfter: wizard.to.balance,
+                                status: "SUCCESS"
+                            });
+
+                            updateDBVisualizer();
+                            syncVirtualFiles();
+                            writeOutput(`\n[SUCCESS] Transferred Rs. ${trfAmt.toFixed(2)} to ${wizard.to.accountNumber}`, "system-success");
+
+                            wizard = {};
+                            currentState = STATE_MAIN;
+                            printMenu();
+                        });
+                        break;
+
+                    // Balance Enquiry
+                    case STATE_BAL_ACC:
+                        let balAcc = findAcc(val);
+                        if (!balAcc) throw new Error("Account number does not exist.");
+                        triggerLoading("Querying accounts...", () => {
+                            writeOutput(`\n---------------------------------------------\n  Account Number : ${balAcc.accountNumber}\n  Holder Name    : ${balAcc.customer.name}\n  Account Type   : ${balAcc.type}\n  Current Balance: Rs. ${balAcc.balance.toFixed(2)}\n---------------------------------------------`, "system-out");
+                            currentState = STATE_MAIN;
+                            printMenu();
+                        });
+                        break;
+
+                    // Search Account criteria
+                    case STATE_SR_CRITERIA:
+                        let crit = parseInt(val);
+                        if (isNaN(crit) || crit < 1 || crit > 4) throw new Error("Invalid criteria.");
+                        wizard.criteria = crit;
+                        writeOutput("Enter search query: ", "system-out");
+                        currentState = STATE_SR_QUERY;
+                        break;
+                    case STATE_SR_QUERY:
+                        triggerLoading("Querying databases...", () => {
+                            let results = [];
+                            let q = val.toLowerCase();
+                            accounts.forEach(acc => {
+                                if (wizard.criteria === 1 && acc.accountNumber === val) results.push(acc);
+                                else if (wizard.criteria === 2 && acc.customer.name.toLowerCase().includes(q)) results.push(acc);
+                                else if (wizard.criteria === 3 && acc.customer.phone === val) results.push(acc);
+                                else if (wizard.criteria === 4 && acc.customer.aadhaar === val) results.push(acc);
+                            });
+
+                            if (results.length === 0) {
+                                writeOutput("\n[INFO] No accounts matched your search.", "system-out");
+                            } else {
+                                writeOutput(`\n--- Search Results (${results.length} matches) ---`, "system-success");
+                                results.forEach(acc => {
+                                    writeOutput(`============================================\nAccount Number : ${acc.accountNumber}\nAccount Type   : ${acc.type}\nCurrent Balance: Rs. ${acc.balance.toFixed(2)}\n--------------------------------------------\nCustomer Name : ${acc.customer.name}\nAge / Gender  : ${acc.customer.age} / ${acc.customer.gender}\nPhone Number  : ${acc.customer.phone}\nEmail         : ${acc.customer.email}\nAddress       : ${acc.customer.address}\nAadhaar Card  : ${acc.customer.aadhaar}\nPAN Card      : ${acc.customer.pan}\n============================================`, "system-out");
+                                });
+                            }
+                            wizard = {};
+                            currentState = STATE_MAIN;
+                            printMenu();
+                        });
+                        break;
+
+                    // Transaction History
+                    case STATE_TX_ACC:
+                        let txAcc = findAcc(val);
+                        if (!txAcc) throw new Error("Account number does not exist.");
+                        writeOutput(`\n--- TRANSACTION HISTORY FOR ACCOUNT: ${txAcc.accountNumber} ---`, "system-out");
+                        let found = false;
+                        transactions.forEach(txn => {
+                            if (txn.accountNumber === txAcc.accountNumber) {
+                                writeOutput(`${txn.timestamp.replace('T', ' ')} | ${txn.type.padEnd(12)} | Amt: Rs. ${txn.amount.toFixed(2).padEnd(9)} | Prev: Rs. ${txn.balanceBefore.toFixed(2).padEnd(9)} | New: Rs. ${txn.balanceAfter.toFixed(2).padEnd(9)} | [${txn.status}]`, "system-out");
+                                found = true;
+                            }
+                        });
+                        if (!found) writeOutput("No transactions logged.", "system-out");
+                        currentState = STATE_MAIN;
+                        printMenu();
+                        break;
+
+                    // Update Details
+                    case STATE_UP_ACC:
+                        let upAcc = findAcc(val);
+                        if (!upAcc) throw new Error("Account number does not exist.");
+                        wizard.acc = upAcc;
+                        writeOutput(`\n----------------- UPDATE PROFILE FIELD -----------------\n  Account: ${upAcc.accountNumber} (${upAcc.customer.name})\n  1. Update Customer Name          5. Update Email Address\n  2. Update Customer Age           6. Update Residential Address\n  3. Update Customer Gender        7. Update Aadhaar Card Number\n  4. Update Phone Number           8. Update PAN Card Number\n  9. Exit Update Submenu\n--------------------------------------------------------\nSelect field to update (1-9): `, "system-out");
+                        currentState = STATE_UP_CHOICE;
+                        break;
+                    case STATE_UP_CHOICE:
+                        let opt = parseInt(val);
+                        if (isNaN(opt) || opt < 1 || opt > 9) {
+                            writeOutput("[WARNING] Invalid selection. Choose 1-9.", "system-error");
+                            writeOutput(`Select field to update (1-9): `, "prompt-symbol");
+                            return;
+                        }
+
+                        if (opt === 9) {
+                            writeOutput("Exiting profile update wizard.", "system-out");
+                            wizard = {};
+                            currentState = STATE_MAIN;
+                            printMenu();
+                            return;
+                        }
+
+                        wizard.choice = opt;
+                        let labels = ["Customer Name", "Customer Age", "Customer Gender", "Phone Number (10 digits)", "Email Address", "Residential Address", "Aadhaar Card Number (12 digits)", "PAN Card Number (10 characters)"];
+                        wizard.label = labels[opt - 1];
+                        writeOutput(`Enter new value for ${wizard.label}: `, "system-out");
+                        currentState = STATE_UP_VALUE;
+                        break;
+                    case STATE_UP_VALUE:
+                        triggerLoading("Committing updates and validating values...", () => {
+                            let textVal = val.trim();
+                            switch (wizard.choice) {
+                                case 1:
+                                    if (!textVal) throw new Error("Customer name cannot be empty.");
+                                    wizard.acc.customer.name = textVal;
+                                    break;
+                                case 2:
+                                    let ageVal = parseInt(textVal);
+                                    if (isNaN(ageVal) || ageVal < 18) throw new Error("Age must be an integer >= 18.");
+                                    wizard.acc.customer.age = ageVal;
+                                    break;
+                                case 3:
+                                    if (!textVal) throw new Error("Gender cannot be empty.");
+                                    wizard.acc.customer.gender = textVal;
+                                    break;
+                                case 4:
+                                    if (!textVal.match(/^\d{10}$/)) throw new Error("Phone must be exactly 10 digits.");
+                                    wizard.acc.customer.phone = textVal;
+                                    break;
+                                case 5:
+                                    if (!textVal.includes("@") || !textVal.includes(".")) throw new Error("Invalid email format.");
+                                    wizard.acc.customer.email = textVal;
+                                    break;
+                                case 6:
+                                    if (!textVal) throw new Error("Address cannot be empty.");
+                                    wizard.acc.customer.address = textVal;
+                                    break;
+                                case 7:
+                                    if (!textVal.match(/^\d{12}$/)) throw new Error("Aadhaar must be exactly 12 digits.");
+                                    wizard.acc.customer.aadhaar = textVal;
+                                    break;
+                                case 8:
+                                    if (!textVal.match(/^[A-Z]{5}\d{4}[A-Z]{1}$/i)) throw new Error("Invalid PAN format.");
+                                    wizard.acc.customer.pan = textVal.toUpperCase();
+                                    break;
+                            }
+
+                            updateDBVisualizer();
+                            syncVirtualFiles();
+                            writeOutput(`\n[SUCCESS] ${wizard.label} successfully updated.`, "system-success");
+                            
+                            // Loop back to update menu
+                            writeOutput(`\n----------------- UPDATE PROFILE FIELD -----------------\n  Account: ${wizard.acc.accountNumber} (${wizard.acc.customer.name})\n  1. Update Customer Name          5. Update Email Address\n  2. Update Customer Age           6. Update Residential Address\n  3. Update Customer Gender        7. Update Aadhaar Card Number\n  4. Update Phone Number           8. Update PAN Card Number\n  9. Exit Update Submenu\n--------------------------------------------------------\nSelect field to update (1-9): `, "system-out");
+                            currentState = STATE_UP_CHOICE;
+                        });
+                        break;
+
+                    // Delete Account
+                    case STATE_DL_ACC:
+                        let dlAcc = findAcc(val);
+                        if (!dlAcc) throw new Error("Account number does not exist.");
+                        wizard.acc = dlAcc;
+                        writeOutput(`Warning: This will permanently delete the account owned by ${dlAcc.customer.name}\nAre you sure you want to proceed? (yes/no): `, "system-out");
+                        currentState = STATE_DL_CONF;
+                        break;
+                    case STATE_DL_CONF:
+                        if (val.toLowerCase() === "yes") {
+                            triggerLoading("Removing keys and adjusting arrays...", () => {
+                                let idx = accounts.indexOf(wizard.acc);
+                                accounts.splice(idx, 1);
+                                updateDBVisualizer();
+                                syncVirtualFiles();
+                                writeOutput(`\n[SUCCESS] Account ${wizard.acc.accountNumber} successfully deleted.`, "system-success");
+                                wizard = {};
+                                currentState = STATE_MAIN;
+                                printMenu();
+                            });
+                        } else {
+                            writeOutput("\n[INFO] Deletion cancelled.", "system-out");
+                            wizard = {};
+                            currentState = STATE_MAIN;
+                            printMenu();
+                        }
+                        break;
+
+                    // Interest Calculator
+                    case STATE_INT_ACC:
+                        let intAcc = findAcc(val);
+                        if (!intAcc) throw new Error("Account number does not exist.");
+                        if (intAcc.type !== "Savings") throw new Error("Interest calculation is only applicable for Savings Accounts.");
+
+                        let interest = intAcc.balance * 0.04;
+                        writeOutput(`\n---------------------------------------------\n  Savings Account: ${intAcc.accountNumber}\n  Annual Interest Rate: 4.0% P.A.\n  Estimated Yearly Interest: Rs. ${interest.toFixed(2)}\n---------------------------------------------`, "system-out");
+                        currentState = STATE_MAIN;
+                        printMenu();
+                        break;
+
+                    // Mini statement
+                    case STATE_MINI_ACC:
+                        let miniAcc = findAcc(val);
+                        if (!miniAcc) throw new Error("Account number does not exist.");
+                        writeOutput(`\n--- MINI STATEMENT FOR ACCOUNT: ${miniAcc.accountNumber} (LAST 10 TRANSACTIONS) ---`, "system-out");
+                        
+                        let accTxns = transactions.filter(t => t.accountNumber === miniAcc.accountNumber);
+                        if (accTxns.length === 0) {
+                            writeOutput("No transactions logged.", "system-out");
+                        } else {
+                            let lastTen = accTxns.slice(-10);
+                            lastTen.forEach(txn => {
+                                writeOutput(`${txn.timestamp.replace('T', ' ')} | ${txn.type.padEnd(12)} | Amt: Rs. ${txn.amount.toFixed(2).padEnd(9)} | Prev: Rs. ${txn.balanceBefore.toFixed(2).padEnd(9)} | New: Rs. ${txn.balanceAfter.toFixed(2).padEnd(9)} | [${txn.status}]`, "system-out");
+                            });
+                        }
+                        currentState = STATE_MAIN;
+                        printMenu();
+                        break;
+
+                    // Submenu choices
+                    case STATE_ADMIN_SUB:
+                        let subOption = parseInt(val);
+                        if (isNaN(subOption) || subOption < 1 || subOption > 5) {
+                            writeOutput("[WARNING] Invalid sub-option selection.", "system-error");
+                            currentState = STATE_MAIN;
+                            printMenu();
+                            return;
+                        }
+
+                        if (subOption === 1) {
+                            writeOutput("Enter current password: ", "system-out");
+                            currentState = STATE_ADMIN_SUB_CHG_OLD;
+                        } else if (subOption === 2) {
+                            triggerLoading("Unlocking system blocks...", () => {
+                                isLocked = false;
+                                failedAttempts = 0;
+                                writeOutput("\n[SUCCESS] Administrative lock counts reset successfully.", "system-success");
+                                currentState = STATE_MAIN;
+                                printMenu();
+                            });
+                        } else if (subOption === 3) {
+                            if (!isAdminLoggedIn) {
+                                writeOutput("\n[ERROR] Administrative access required.", "system-error");
+                            } else {
+                                displayAllAccountsDetailed();
+                            }
+                            currentState = STATE_MAIN;
+                            printMenu();
+                        } else if (subOption === 4) {
+                            if (!isAdminLoggedIn) {
+                                writeOutput("\n[ERROR] Administrative access required.", "system-error");
+                            } else {
+                                displayAllTransactionsDetailed();
+                            }
+                            currentState = STATE_MAIN;
+                            printMenu();
+                        } else if (subOption === 5) {
+                            if (isAdminLoggedIn) {
+                                isAdminLoggedIn = false;
+                                writeOutput("\n[SUCCESS] Admin logged out successfully.", "system-success");
+                            } else {
+                                writeOutput("\n[INFO] No active admin session found.", "system-out");
+                            }
+                            currentState = STATE_MAIN;
+                            printMenu();
+                        }
+                        break;
+
+                    case STATE_ADMIN_SUB_CHG_OLD:
+                        wizard.oldPass = val;
+                        writeOutput("Enter new password: ", "system-out");
+                        currentState = STATE_ADMIN_SUB_CHG_NEW;
+                        break;
+                    case STATE_ADMIN_SUB_CHG_NEW:
+                        triggerLoading("Saving password changes...", () => {
+                            if (wizard.oldPass === adminPassword) {
+                                adminPassword = val;
+                                writeOutput("\n[SUCCESS] Password updated successfully.", "system-success");
+                            } else {
+                                writeOutput("\n[ERROR] Failed to update password. Invalid old password.", "system-error");
+                            }
+                            wizard = {};
+                            currentState = STATE_MAIN;
+                            printMenu();
+                        });
+                        break;
+                }
+            } catch (err) {
+                writeOutput("\n[ERROR] Operation failed: " + err.message, "system-error");
+                wizard = {};
+                currentState = STATE_MAIN;
+                writeOutput("", "system-out");
+                printMenu();
+            }
+        }
+
+        function findAcc(num) {
+            return accounts.find(a => a.accountNumber === num.trim());
+        }
+
+        // Print administrative tabular listings
+        function displayAllAccountsCLI() {
+            writeOutput("\n---------------------------------------------------------------------------------------------------------------------", "system-out");
+            writeOutput(`| ${"Account No".padEnd(15)} | ${"Customer Name".padEnd(20)} | ${"Type".padEnd(12)} | ${"Balance".padEnd(15)} | ${"Age".padEnd(12)} | ${"Phone".padEnd(15)} |`, "system-out");
+            writeOutput("---------------------------------------------------------------------------------------------------------------------", "system-out");
+            accounts.forEach(acc => {
+                let formattedBal = "Rs. " + acc.balance.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                writeOutput(`| ${acc.accountNumber.padEnd(15)} | ${acc.customer.name.padEnd(20)} | ${acc.type.padEnd(12)} | ${formattedBal.padEnd(15)} | ${String(acc.customer.age).padEnd(12)} | ${acc.customer.phone.padEnd(15)} |`, "system-out");
+            });
+            writeOutput("---------------------------------------------------------------------------------------------------------------------", "system-out");
+        }
+
+        function displayDashboardReport() {
+            let totalBal = accounts.reduce((sum, a) => sum + a.balance, 0);
+            let totalDep = transactions.filter(t => t.status === "SUCCESS" && (t.type === "DEPOSIT" || t.type === "OPENING_DEP" || t.type === "TRANSFER_IN")).reduce((sum, t) => sum + t.amount, 0);
+            let totalWth = transactions.filter(t => t.status === "SUCCESS" && (t.type === "WITHDRAWAL" || t.type === "TRANSFER_OUT")).reduce((sum, t) => sum + t.amount, 0);
+            
+            writeOutput("\n=================================================================\n  BANK SYSTEM SUMMARY REPORT\n=================================================================", "system-out");
+            writeOutput("System Date & Time : 2026-07-12 14:13:08", "system-out");
+            writeOutput("System Health      : HEALTHY (ONLINE)", "system-out");
+            writeOutput("Total Accounts     : " + accounts.length, "system-out");
+            writeOutput("Active Customers   : " + new Set(accounts.map(a => a.customer.aadhaar)).size, "system-out");
+            writeOutput("Total Balance Pool : Rs. " + totalBal.toFixed(2), "system-out");
+            writeOutput("Total Txn Log Count: " + transactions.length, "system-out");
+            writeOutput("Sum of Deposits    : Rs. " + totalDep.toFixed(2), "system-out");
+            writeOutput("Sum of Withdrawals : Rs. " + totalWth.toFixed(2), "system-out");
+            writeOutput("-----------------------------------------------------------------", "system-out");
+        }
+
+        function displayAllAccountsDetailed() {
+            writeOutput("\n=================================================================\n  TOTAL ACCOUNTS DETAILED REPORT\n=================================================================", "system-out");
+            accounts.forEach(acc => {
+                writeOutput(`Acc Number : ${acc.accountNumber} | Type: ${acc.type}\nHolder Name: ${acc.customer.name} | Phone: ${acc.customer.phone}\nAadhaar ID : ${acc.customer.aadhaar} | PAN: ${acc.customer.pan}\nBalance    : Rs. ${acc.balance.toFixed(2)} | Opened: ${acc.dateOfCreation.replace('T', ' ')}\n-----------------------------------------------------------------`, "system-out");
+            });
+        }
+
+        function displayAllTransactionsDetailed() {
+            writeOutput("\n=================================================================\n  TOTAL TRANSACTIONS LOG REPORT\n=================================================================", "system-out");
+            writeOutput(`${"Txn ID".padEnd(10)} | ${"Acc Number".padEnd(12)} | ${"Type".padEnd(12)} | ${"Amount".padEnd(12)} | ${"Balance After".padEnd(15)} | ${"Status"}\n--------------------------------------------------------------------------------`, "system-out");
+            transactions.forEach(txn => {
+                writeOutput(`${txn.txnId.padEnd(10)} | ${txn.accountNumber.padEnd(12)} | ${txn.type.padEnd(12)} | Rs. ${txn.amount.toFixed(2).padEnd(8)} | Rs. ${txn.balanceAfter.toFixed(2).padEnd(11)} | ${txn.status}`, "system-out");
+            });
+        }
+
+        // Syncs visual database view
+        function updateDBVisualizer() {
+            const dbList = document.getElementById("dbList");
+            dbList.innerHTML = "";
+
+            if (accounts.length === 0) {
+                dbList.innerHTML = `<div style="color: var(--text-muted); text-align: center; margin-top: 4rem;">Database empty.</div>`;
+                return;
+            }
+
+            accounts.forEach(acc => {
+                const card = document.createElement("div");
+                card.className = "account-card";
+                const typeClass = acc.type === "Savings" ? "type-savings" : "type-current";
+                
+                card.innerHTML = `
+                    <div class="card-header">
+                        <span class="acc-number">${acc.accountNumber}</span>
+                        <span class="acc-type ${typeClass}">${acc.type}</span>
+                    </div>
+                    <div class="customer-info">
+                        <div class="info-row"><span class="info-label">Name</span><span class="info-value">${acc.customer.name}</span></div>
+                        <div class="info-row"><span class="info-label">Age/Gen</span><span class="info-value">${acc.customer.age}/${acc.customer.gender}</span></div>
+                        <div class="info-row"><span class="info-label">Phone</span><span class="info-value">${acc.customer.phone}</span></div>
+                        <div class="info-row"><span class="info-label">Email</span><span class="info-value">${acc.customer.email}</span></div>
+                        <div class="info-row"><span class="info-label">Aadhaar</span><span class="info-value">${acc.customer.aadhaar}</span></div>
+                        <div class="info-row"><span class="info-label">PAN</span><span class="info-value">${acc.customer.pan}</span></div>
+                    </div>
+                    <div class="card-footer">
+                        <span class="bal-label">Balance</span>
+                        <span class="bal-value">Rs. ${acc.balance.toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
+                    </div>
+                `;
+                dbList.appendChild(card);
+            });
+        }
+
+        function syncVirtualFiles() {
+            const accArea = document.getElementById("accountsFileContent");
+            const txnArea = document.getElementById("transactionsFileContent");
+            const accByte = document.getElementById("accFileByte");
+            const txnByte = document.getElementById("txnFileByte");
+
+            let accText = "";
+            accounts.forEach(acc => {
+                accText += `${acc.accountNumber};${acc.type};${acc.balance.toFixed(1)};${acc.dateOfCreation};${acc.customer.name}|${acc.customer.age}|${acc.customer.gender}|${acc.customer.phone}|${acc.customer.email}|${acc.customer.address}|${acc.customer.aadhaar}|${acc.customer.pan}\n`;
+            });
+            accArea.innerText = accText;
+            accByte.innerText = `${accText.length} characters`;
+
+            let txnText = "";
+            transactions.forEach(t => {
+                txnText += `${t.txnId}|${t.accountNumber}|${t.timestamp}|${t.type}|${t.amount.toFixed(1)}|${t.balanceBefore.toFixed(1)}|${t.balanceAfter.toFixed(1)}|${t.status}\n`;
+            });
+            txnArea.innerText = txnText;
+            txnByte.innerText = `${txnText.length} characters`;
+        }
+
+        function switchTab(evt, tabId) {
+            const tabs = document.querySelectorAll(".tab-content");
+            tabs.forEach(t => t.classList.remove("active"));
+            
+            const btns = document.querySelectorAll(".tab-btn");
+            btns.forEach(b => b.classList.remove("active"));
+
+            document.getElementById(tabId).classList.add("active");
+            evt.currentTarget.classList.add("active");
+        }
+    </script>
+</body>
+</html>
